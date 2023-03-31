@@ -9,6 +9,11 @@ class UserSignupSerializer(serializers.ModelSerializer):
         model = User
         fields = ['id', 'username', 'email', 'password']
 
+    def validate_email(self, value):
 
+        user = User.objects.filter(email=value).exists()
+        if user:
+            raise serializers.ValidationError("Cette adresse e-mail existe déjà.")
+        return value
 
 
