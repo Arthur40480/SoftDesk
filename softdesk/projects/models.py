@@ -1,6 +1,5 @@
 from django.db import models
 
-
 class Contributors(models.Model):
 
     # permission = models.fields.ChoiceFields
@@ -18,7 +17,7 @@ class Projects(models.Model):
     title = models.fields.CharField(max_length=100)
     description = models.fields.CharField(max_length=5000)
     type = models.fields.CharField(choices=Type.choices, max_length=15)
-    # ForeignKey for author_user_id
+    author = models.ManyToManyField(to='authentication.Users', related_name='projects_author', blank=True)
 
 
 class Issues(models.Model):
