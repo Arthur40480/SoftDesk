@@ -5,12 +5,11 @@ from rest_framework import serializers
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
-from .models import Users
-
+from django.contrib.auth.models import User
 
 class UserCreate(generics.CreateAPIView):
 
-    queryset = Users.objects.all()
+    queryset = User.objects.all()
     serializer_class = UserSignupSerializer
 
 

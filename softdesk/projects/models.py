@@ -1,12 +1,8 @@
 from django.db import models
-
-class Contributors(models.Model):
-
-    # permission = models.fields.ChoiceFields
-    role = models.fields.CharField(max_length=100)
+from django.contrib.auth.models import User
 
 
-class Projects(models.Model):
+class Project(models.Model):
 
     class Type(models.TextChoices):
         BACK_END = "Back-end"
@@ -15,12 +11,27 @@ class Projects(models.Model):
         ANDROID = 'Android'
 
     title = models.fields.CharField(max_length=100)
-    description = models.fields.CharField(max_length=5000)
-    type = models.fields.CharField(choices=Type.choices, max_length=15)
-    author = models.ManyToManyField(to='authentication.Users', related_name='projects_author', blank=True)
+    description = models.fields.CharField(max_length=5000, blank=True)
+    type = models.fields.CharField(choices=Type.choices, max_length=15, default="Back-end")
+    users = models.ManyToManyField(User, through='Contributors', related_name='contributor')
+    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='project_author')
 
 
-class Issues(models.Model):
+class Contributors(models.Model):
+
+    class Permission(models.TextChoices):
+        ADMIN = "Admin"
+        LIST = "list"
+        DELETE = "Delete"
+        UPDATE = "Update"
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, default="1")
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, default="1")
+    permission = models.fields.CharField(choices=Permission.choices, max_length=15, default="Admin")
+    role = models.fields.CharField(max_length=50)
+
+
+class Issue(models.Model):
 
     class Priority(models.TextChoices):
         LOW = 'Low'
@@ -38,17 +49,17 @@ class Issues(models.Model):
         Done = 'Done'
 
     title = models.fields.CharField(max_length=100)
-    description = models.fields.CharField(max_length=5000)
-    priority = models.fields.CharField(choices=Priority.choices, max_length=10)
-    tag = models.fields.CharField(choices=Tag.choices, max_length=15)
-    status = models.fields.CharField(choices=Status.choices, max_length=50)
+    description = models.fields.CharField(max_length=5000, blank=True)
+    priority = models.fields.CharField(choices=Priority.choices, max_length=10, default="Low")
+    tag = models.fields.CharField(choices=Tag.choices, max_length=15, default="Bug")
+    status = models.fields.CharField(choices=Status.choices, max_length=50, default="To do")
     creation_date = models.fields.DateTimeField(auto_now_add=True)
     # ForeignKey assignee user_id
     # ForeignKey author user_id
     # ForeignKey project_id
 
 
-class Comments(models.Model):
+class Comment(models.Model):
 
     description = models.fields.CharField(max_length=5000)
     creation_date = models.fields.DateTimeField(auto_now_add=True)

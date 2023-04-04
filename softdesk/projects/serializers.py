@@ -1,7 +1,9 @@
 from rest_framework import serializers
-from .models import Projects
+from .models import Project
+
 
 class ProjectSerializer(serializers.ModelSerializer):
+
     class Meta:
-        model = Projects
-        fields = ['id', 'title', 'description', 'type', 'author']
+        model = Project
+        fields = ['id', 'title', 'description', 'type', 'author', 'users']
