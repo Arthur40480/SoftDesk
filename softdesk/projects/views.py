@@ -9,6 +9,8 @@ from .permissions import IsAuthorOrReadOnly
 
 
 class ProjectCreateAndList(APIView):
+
+
     def post(self, request):
         serializer = ProjectSerializer(data=request.data)
         if serializer.is_valid():
@@ -22,15 +24,21 @@ class ProjectCreateAndList(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class ProjectUpdate(APIView):
+class ProjectDetail(APIView):
 
     permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly]
+
     def get_project(self, pk):
         try:
             project = Project.objects.get(pk=pk)
         except Project.DoesNotExist:
             raise Http404("Le projet recherché n'existe pas")
         return project
+
+    def get(self, request, pk):
+        project = Project.objects.get(pk=pk)
+        serializer = ProjectSerializer(project)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def patch(self, request, pk):
         project = self.get_project(pk)
@@ -39,9 +47,6 @@ class ProjectUpdate(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_204_NO_CONTENT)
-
-
-class ProjectDelete(APIView):
 
     def delete(self, request, pk):
         try:
