@@ -6,4 +6,3 @@ admin.site.register(Issue)
 admin.site.register(Comment)
 admin.site.register(Contributor)
 
-# Register your models here.
