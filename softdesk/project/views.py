@@ -4,13 +4,20 @@ from rest_framework.views import APIView
 from rest_framework import status, permissions
 from .models import Project, Contributor
 from .serializers import ProjectSerializer
-from .permissions import IsAuthorOrReadOnly
+from .permissions import ProjectPermission
+from rest_framework.generics import get_object_or_404
+from rest_framework.exceptions import NotFound
 
-
+"""
+PROJECT ENDPOINT
+"""
 class ProjectCreateAndList(APIView):
 
+    permission_classes = [permissions.IsAuthenticated]
+
     """
-    Méthode POST permettant de créer un Projet
+    Méthode création de projet ➡ POST
+    Permission ➡ N'importe quel utilisateur connecter
     """
 
     def post(self, request):
@@ -21,57 +28,58 @@ class ProjectCreateAndList(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     """
-    Méthode GET qui récupère la liste de tous les projets rattachés à l'utilisateur connecté 
-    Si auteur
-    Si contributeur
+    Méthode affichage de tous les projets rattachés à l'utilisateur connecté ➡ GET
+    Permission ➡ Auteur ou contributeur
     """
 
     def get(self, request):
+        user = request.user
+        projects = Project.objects.filter(author=user) | Project.objects.filter(contributor=user)
 
-        if request.user.is_authenticated:
-            user = request.user
-            projects = Project.objects.filter(author=user) | Project.objects.filter(contributor=user)
-
-            if projects:
-                serializer = ProjectSerializer(projects, many=True)
-                return Response(serializer.data, status=status.HTTP_200_OK)
-
-            else:
-                return Response({"message": "Aucun projet relier à cet utilisateur."}, status=status.HTTP_404_NOT_FOUND)
+        if projects:
+            serializer = ProjectSerializer(projects, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
 
         else:
-            return Response({"message": "Vous n'êtes pas connecter. "})
+            return Response({"message": "Aucun projet relier à cet utilisateur."}, status=status.HTTP_404_NOT_FOUND)
 
 
 class ProjectDetail(APIView):
 
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly]
+    permission_classes = [permissions.IsAuthenticated, ProjectPermission]
 
-    def get_project(self, pk):
+    def get_project(self, project_pk):
         try:
-            project = Project.objects.get(pk=pk)
+            return Project.objects.get(id=project_pk)
         except Project.DoesNotExist:
-            raise Http404("Le projet recherché n'existe pas")
-        return project
+            raise Http404()
 
-    def get(self, request, pk):
-        project = Project.objects.get(pk=pk)
+    """
+    Méthode affichage de tous les détails d'un projet ➡ GET
+    Permission ➡ N'importe quel utilisateur connecter
+    """
+    def get(self, request, project_pk):
+        project = self.get_project(project_pk)
         serializer = ProjectSerializer(project)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    def patch(self, request, pk):
-        project = self.get_project(pk)
-        serializer = ProjectSerializer(project, data=request.data, partial=True)
+    """
+    Méthode de mise à jour d'un projet ➡ PUT
+    Permission ➡ Auteur uniquement
+    """
+    def put(self, request, project_pk):
+        project = self.get_project(project_pk)
+        serializer = ProjectSerializer(project, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_204_NO_CONTENT)
 
-    def delete(self, request, pk):
-        try:
-            project = Project.objects.get(pk=pk)
-            project.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
-
-        except Project.DoesNotExist:
-            raise Http404("Le projet recherché n'existe pas")
+    """
+    Méthode de suppression d'un projet ➡ DELETE
+    Permission ➡ Auteur uniquement
+    """
+    def delete(self, request, project_pk):
+        project = self.get_project(project_pk)
+        project.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)

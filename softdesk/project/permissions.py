@@ -1,13 +1,17 @@
 from rest_framework import permissions
+from rest_framework.generics import get_object_or_404
+from .models import Project
 
 
-class IsAuthorOrReadOnly(permissions.BasePermission):
+class ProjectPermission(permissions.BasePermission):
 
-    def has_object_permission(self, request, view, obj):
-        # Read permissions are allowed to any request,
-        # so we'll always allow GET, HEAD or OPTIONS requests.
-        if request.method in permissions.SAFE_METHODS:
+    def has_permission(self, request, view):
+        try:
+            project = get_object_or_404(Project, id=view.kwargs['project_pk'])
+            if request.method in permissions.SAFE_METHODS:
+                return project in Project.objects.filter(contributors__user=request.user)
+            return request.user == project.author
+        except KeyError:
             return True
 
-        # Write permissions are only allowed to the owner of the object.
-        return obj.author == request.user
+
