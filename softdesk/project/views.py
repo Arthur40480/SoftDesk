@@ -2,22 +2,19 @@ from django.http import Http404
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status, permissions
-from .models import Project, Contributor, User, Issue
-from .serializers import ProjectSerializer, ContributorSerializer, IssueSerializer
-from .permissions import ProjectPermission, ContributorPermission, IssuePermission
+from .models import Project, Contributor, User, Issue, Comment
+from .serializers import ProjectSerializer, ContributorSerializer, IssueSerializer, CommentSerializer
+from .permissions import ProjectPermission, ContributorPermission, IssuePermission, CommentPermission
 from rest_framework.generics import get_object_or_404
-from rest_framework.exceptions import NotFound
 
-"""
-PROJECT ENDPOINT
-"""
+
 class ProjectCreateAndList(APIView):
 
     permission_classes = [permissions.IsAuthenticated]
 
     """
     Méthode création de projet ➡ POST
-    Permission ➡ N'importe quel utilisateur connecter
+    Permission ➡ N'importe quel utilisateur connecté
     """
 
     def post(self, request):
@@ -29,7 +26,7 @@ class ProjectCreateAndList(APIView):
 
     """
     Méthode affichage de tous les projets rattachés à l'utilisateur connecté ➡ GET
-    Permission ➡ Auteur ou contributeur
+    Permission ➡ Auteur et Contributeur
     """
 
     def get(self, request):
@@ -41,7 +38,7 @@ class ProjectCreateAndList(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
 
         else:
-            return Response({"message": "Aucun projet relier à cet utilisateur."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"message": "Aucun projet relié à cet utilisateur."}, status=status.HTTP_404_NOT_FOUND)
 
 
 class ProjectDetail(APIView):
@@ -56,7 +53,7 @@ class ProjectDetail(APIView):
 
     """
     Méthode affichage de tous les détails d'un projet ➡ GET
-    Permission ➡ N'importe quel utilisateur connecter
+    Permission ➡ N'importe quel utilisateur connecté
     """
     def get(self, request, project_pk):
         project = self.get_project(project_pk)
@@ -91,7 +88,7 @@ class ContributorCreateandList(APIView):
 
     """
     Méthode affichage de tous les contributeurs rattachés à un projet ➡ GET
-    Permission ➡ N'importe quel utilisateur connecter
+    Permission ➡ N'importe quel utilisateur connecté
     """
     def get(self, request, project_pk):
         project = get_object_or_404(Project, id=project_pk)
@@ -134,7 +131,7 @@ class ContributorDetail(APIView):
     def delete(self, request, project_pk, contributor_pk):
         contributor = get_object_or_404(Contributor, id=contributor_pk)
         contributor.delete()
-        return Response({"message": "Le contributeur à bien été supprimer"}, status=status.HTTP_204_NO_CONTENT)
+        return Response({"message": "Le contributeur à bien été supprimé"}, status=status.HTTP_204_NO_CONTENT)
 
 
 class IssueCreateAndList(APIView):
@@ -143,7 +140,7 @@ class IssueCreateAndList(APIView):
 
     """
     Méthode d'affichage des problèmes d'un projet ➡ GET
-    Permission ➡ Auteur ou contributeur
+    Permission ➡ Auteur et Contributeur
     """
     def get(self, request, project_pk):
         project = get_object_or_404(Project, id=project_pk)
@@ -153,7 +150,7 @@ class IssueCreateAndList(APIView):
 
     """
     Méthode de création d'un problème dans un projet ➡ POST
-    Permission ➡ Auteur ou contributeur
+    Permission ➡ Auteur et Contributeur
     """
     def post(self, request, project_pk):
         serializer = IssueSerializer(data=request.data)
@@ -186,4 +183,64 @@ class IssueDetail(APIView):
     def delete(self, request, project_pk, issue_pk):
         issue = get_object_or_404(Issue, id=issue_pk)
         issue.delete()
-        return Response({"message": "Problème supprimer !"}, status=status.HTTP_204_NO_CONTENT)
+        return Response({"message": "Problème supprimé !"}, status=status.HTTP_204_NO_CONTENT)
+
+
+class CommentCreateAndList(APIView):
+
+    permission_classes = [permissions.IsAuthenticated, CommentPermission]
+
+    """
+    Méthode de création d'un commentaire à un problème ➡ POST
+    Permission ➡ Auteur et Contributeur
+    """
+    def post(self, request, project_pk, issue_pk):
+        serializer = CommentSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    """
+    Méthode d'affichage de tous les commentaires d'un problème ➡ GET
+    Permission ➡ Auteur et Contributeur
+    """
+    def get(self, request, project_pk, issue_pk):
+        issue = get_object_or_404(Issue, id=issue_pk)
+        comment = Comment.objects.filter(issue=issue)
+        serializer = CommentSerializer(comment, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+class CommentDetail(APIView):
+
+    permission_classes = [permissions.IsAuthenticated, CommentPermission]
+
+    """
+    Méthode d'affichage d'un commentaire d'un problème ➡ GET
+    Permission ➡ Auteur et Contributeur
+    """
+    def get(self, request, project_pk, issue_pk, comment_pk):
+        comment = get_object_or_404(Comment, id=comment_pk)
+        serializer = CommentSerializer(comment)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    """
+    Méthode d'actualisation  d'un commentaire d'un problème ➡ PUT
+    Permission ➡ Auteur et Contributeur
+    """
+    def put(self, request, project_pk, issue_pk, comment_pk):
+        comment = get_object_or_404(Comment, id=comment_pk)
+        serializer = CommentSerializer(comment, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    """
+    Méthode de supression d'un commentaire d'un problème ➡ DELETE
+    Permission ➡ Auteur et Contributeur
+    """
+    def delete(self, request, project_pk, issue_pk, comment_pk):
+        comment = get_object_or_404(Comment, id=comment_pk)
+        comment.delete()
+        return Response({"message": "Commentaire supprimé ! "}, status=status.HTTP_204_NO_CONTENT)
