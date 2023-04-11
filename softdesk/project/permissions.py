@@ -6,11 +6,10 @@ from .models import Project, Contributor, Issue, Comment
 class ProjectPermission(permissions.BasePermission):
 
     def has_permission(self, request, view):
+        project = get_object_or_404(Project, id=view.kwargs['project_pk'])
         try:
-
-            project = get_object_or_404(Project, id=view.kwargs['project_pk'])
             if request.method in permissions.SAFE_METHODS:
-                return project in Project.objects.filter(contributors__user=request.user)
+                return project.author or Contributor.objects.get(user=request.user, project=project)
             return request.user == project.author
 
         except KeyError:
@@ -36,10 +35,10 @@ class IssuePermission(permissions.BasePermission):
         project = get_object_or_404(Project, id=view.kwargs['project_pk'])
         try:
 
-            if request.method == ['GET', 'POST']:
-                return project.author == request.user or Contributor.objects.filter(user=request.user, project=project).exists()
+            if request.method in ['GET', 'POST']:
+                return project.author == request.user or Contributor.objects.get(user=request.user, project=project)
 
-            elif request.method == ['PUT', 'DELETE']:
+            elif request.method in ['PUT', 'DELETE']:
                 issue = get_object_or_404(Issue, id=view.kwargs['issue_pk'])
                 return issue.author == request.user
 
@@ -53,10 +52,10 @@ class CommentPermission(permissions.BasePermission):
         project = get_object_or_404(Project, id=view.kwargs['project_pk'])
         try:
 
-            if request.method == ['GET', 'POST']:
+            if request.method in ['GET', 'POST']:
                 return project.author == request.user or Contributor.objects.filter(user=request.user, project=project).exists()
 
-            elif request.method == ['PUT', 'DELETE']:
+            elif request.method in ['PUT', 'DELETE']:
                 comment = get_object_or_404(Comment, id=view.kwargs['comment_pk'])
                 return comment.author == request.user
 

@@ -16,7 +16,6 @@ class ProjectCreateAndList(APIView):
     Méthode création de projet ➡ POST
     Permission ➡ N'importe quel utilisateur connecté
     """
-
     def post(self, request):
         serializer = ProjectSerializer(data=request.data)
         if serializer.is_valid():
@@ -28,7 +27,6 @@ class ProjectCreateAndList(APIView):
     Méthode affichage de tous les projets rattachés à l'utilisateur connecté ➡ GET
     Permission ➡ Auteur et Contributeur
     """
-
     def get(self, request):
         user = request.user
         projects = Project.objects.filter(author=user) | Project.objects.filter(contributor=user)
@@ -79,7 +77,7 @@ class ProjectDetail(APIView):
     def delete(self, request, project_pk):
         project = self.get_project(project_pk)
         project.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response({"message": "Le projet à bien été supprimé."}, status=status.HTTP_204_NO_CONTENT)
 
 
 class ContributorCreateandList(APIView):
@@ -102,7 +100,7 @@ class ContributorCreateandList(APIView):
     """
     def post(self, request, project_pk):
         project = get_object_or_404(Project, id=project_pk)
-        data = request.data.copy()
+        data = request.data
         data['project'] = project.id
         try:
             print(request.data)
