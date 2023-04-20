@@ -1,5 +1,7 @@
 # SoftDesk
-## Créez une API sécurisée RESTful en utilisant Django Rest
+## Créez une API sécurisée RESTful en utilisant Django Rest  
+
+L'application permet aux utilisateurs de créer leurs compte, et de pouvoir se connecter via leurs identifiants. Ils pourront egalement créer divers projets, ajouter des utilisateurs qui participeront à ces projets (contributeur), mais aussi des problèmes, qui eux même pourront être commenter.   
 
 ### Comment ça marche :question::question::question:
 
