@@ -48,5 +48,6 @@ python manage.py runserver
 
 ```
 
-Il est possible de naviguer dans l'API via [Postman](https://www.postman.com/) ou bien l'interface Django REST : [http://127.0.0.1:8000/](http://127.0.0.1:8000/)   
+Il est possible de naviguer dans l'API via [Postman](https://www.postman.com/) ou bien l'interface Django REST : [http://127.0.0.1:8000/](http://127.0.0.1:8000/)  
+
 Documentation de l'API [ICI](https://documenter.getpostman.com/view/26504381/2s93Y3tfDk)
