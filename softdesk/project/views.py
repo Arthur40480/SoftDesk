@@ -17,7 +17,10 @@ class ProjectCreateAndList(APIView):
     Permission ➡ N'importe quel utilisateur connecté
     """
     def post(self, request):
-        serializer = ProjectSerializer(data=request.data)
+        data = request.data.copy()
+        data['author'] = request.user.id
+
+        serializer = ProjectSerializer(data=data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -64,7 +67,11 @@ class ProjectDetail(APIView):
     """
     def put(self, request, project_pk):
         project = self.get_project(project_pk)
-        serializer = ProjectSerializer(project, data=request.data)
+
+        data = request.data.copy()
+        data['author'] = request.user.id
+
+        serializer = ProjectSerializer(project, data=data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
@@ -151,7 +158,11 @@ class IssueCreateAndList(APIView):
     Permission ➡ Auteur et Contributeur
     """
     def post(self, request, project_pk):
-        serializer = IssueSerializer(data=request.data)
+        data = request.data.copy()
+        data['author'] = request.user.id
+        data['project'] = project_pk
+
+        serializer = IssueSerializer(data=data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -168,7 +179,11 @@ class IssueDetail(APIView):
     """
     def put(self, request, project_pk, issue_pk):
         issue = get_object_or_404(Issue, id=issue_pk)
-        serializer = IssueSerializer(issue, data=request.data)
+        data = request.data.copy()
+        data['author'] = request.user.id
+        data['project'] = project_pk
+
+        serializer = IssueSerializer(issue, data=data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
@@ -193,7 +208,12 @@ class CommentCreateAndList(APIView):
     Permission ➡ Auteur et Contributeur
     """
     def post(self, request, project_pk, issue_pk):
-        serializer = CommentSerializer(data=request.data)
+        data = request.data.copy()
+        data['author'] = request.user.id
+        data['project'] = project_pk
+        data['issue'] = issue_pk
+
+        serializer = CommentSerializer(data=data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -228,7 +248,12 @@ class CommentDetail(APIView):
     """
     def put(self, request, project_pk, issue_pk, comment_pk):
         comment = get_object_or_404(Comment, id=comment_pk)
-        serializer = CommentSerializer(comment, data=request.data)
+        data = request.data.copy()
+        data['author'] = request.user.id
+        data['project'] = project_pk
+        data['issue'] = issue_pk
+
+        serializer = CommentSerializer(comment, data=data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
